@@ -1,0 +1,65 @@
+databases:
+  - name: ashivam-db
+    plan: free
+    databaseName: ashivam
+    user: ashivam
+
+services:
+  - type: web
+    name: ashivam-website
+    env: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SITE_URL
+        sync: false
+      - key: VITE_CONTACT_API_URL
+        sync: false
+
+  - type: web
+    name: ashivam-api
+    env: node
+    buildCommand: npm ci
+    # Applies pending Prisma migrations before every boot, then starts
+    # the API. Safe to re-run — a no-op once the schema is current.
+    startCommand: npx prisma migrate deploy --schema server/prisma/schema.prisma && npx tsx server/src/index.ts
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ashivam-db
+          property: connectionString
+      - key: ADMIN_API_TOKEN
+        sync: false
+      - key: EMAIL_PROVIDER
+        sync: false
+      - key: CONTACT_TO_EMAIL
+        sync: false
+      - key: CONTACT_FROM_EMAIL
+        sync: false
+      # Resume storage (see server/src/lib/upload.ts). Render's web
+      # services have an EPHEMERAL filesystem, so STORAGE_PROVIDER must
+      # be "cloudinary" (or another persistent provider) in production —
+      # "local" only works with a paid instance + the persistent disk
+      # block below, and is otherwise lost on every deploy/restart.
+      - key: STORAGE_PROVIDER
+        value: cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+    # Only needed if STORAGE_PROVIDER is switched back to "local" on a
+    # paid instance type — not used while STORAGE_PROVIDER=cloudinary.
+    # disk:
+    #   name: ashivam-resumes
+    #   mountPath: /opt/render/project/src/server/uploads/resumes
+    #   sizeGB: 1

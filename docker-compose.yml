@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ashivam
+      POSTGRES_PASSWORD: ashivam
+      POSTGRES_DB: ashivam
+    ports:
+      - '5432:5432'
+    volumes:
+      - ashivam_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ashivam']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '80:80'
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    env_file:
+      - server/.env
+    environment:
+      DATABASE_URL: postgresql://ashivam:ashivam@db:5432/ashivam?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '4000:4000'
+    volumes:
+      # Persist uploaded resumes across container restarts. Without
+      # this, resumes written to server/uploads/resumes inside the
+      # container are lost every time the api service is recreated.
+      - ashivam_resumes:/app/server/uploads/resumes
+
+volumes:
+  ashivam_db_data:
+  ashivam_resumes:

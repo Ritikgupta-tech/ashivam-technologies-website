@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /*
+   * Theme variables — "R G B" channel triplets (no `rgb()` wrapper) so
+   * tailwind.config.ts can compose them as `rgb(var(--x) / <alpha>)`,
+   * which keeps every existing `/NN` opacity utility (e.g. `text-ink/60`)
+   * working unchanged.
+   *
+   * `.dark` holds the *original, unmodified* palette this site always
+   * shipped with — nothing here changes what a dark-mode/default visitor
+   * sees. `.light` is the new corporate-light palette: same gold/sky
+   * brand accents, re-tuned only where needed (mainly `signal`/`primary`,
+   * darkened slightly) to keep WCAG-friendly contrast against a white
+   * page instead of a navy one. `--color-on-signal` is intentionally
+   * identical in both blocks — it's the text/icon color for anything
+   * sitting on a gold `signal` background (buttons, active chips), and
+   * must stay dark regardless of theme or gold-on-gold text would result.
+   * See ThemeProvider (src/lib/theme.tsx) for how `.light`/`.dark` gets
+   * applied to <html>, and the inline script in index.html for the
+   * pre-paint flash-of-wrong-theme guard.
+   */
+  :root,
+  .dark {
+    --color-ink: 248 250 252;
+    --color-ink-soft: 226 232 240;
+    --color-on-signal: 11 17 32;
+    --color-paper: 11 17 32;
+    --color-surface: 15 23 42;
+    --color-line: 30 41 59;
+    --color-line-dark: 51 65 85;
+    --color-primary: 56 189 248;
+    --color-primary-600: 2 132 199;
+    --color-signal: 212 175 55;
+    --color-signal-600: 153 123 36;
+    --color-gold-soft: 232 203 110;
+    --color-slate-50: 30 41 59;
+    --color-slate-100: 38 52 73;
+    --color-slate-300: 71 85 105;
+    --color-slate-500: 100 116 139;
+    --color-slate-600: 124 140 163;
+    --color-slate-700: 148 163 184;
+    --color-slate-900: 248 250 252;
+    color-scheme: dark;
+  }
+
+  .light {
+    --color-ink: 15 23 42;
+    --color-ink-soft: 30 41 59;
+    --color-on-signal: 11 17 32;
+    --color-paper: 255 255 255;
+    --color-surface: 248 250 252;
+    --color-line: 226 232 240;
+    --color-line-dark: 203 213 225;
+    --color-primary: 2 132 199;
+    --color-primary-600: 7 89 133;
+    --color-signal: 146 114 42;
+    --color-signal-600: 107 85 31;
+    --color-gold-soft: 212 175 55;
+    --color-slate-50: 241 245 249;
+    --color-slate-100: 226 232 240;
+    --color-slate-300: 203 213 225;
+    --color-slate-500: 100 116 139;
+    --color-slate-600: 71 85 105;
+    --color-slate-700: 51 65 85;
+    --color-slate-900: 15 23 42;
+    color-scheme: light;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-feature-settings: 'ss01' 1, 'cv01' 1;
+    /* Smooths the color swap when the theme changes (bg-paper/text-ink
+       classes are already set directly in index.html's <body> tag). */
+    @apply transition-colors duration-200;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display text-ink;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-paper));
+  }
+
+  /* Visible, consistent keyboard focus ring across every interactive element */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---- Buttons ---- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded font-sans text-sm font-medium
+           transition-all duration-200 ease-standard
+           disabled:cursor-not-allowed disabled:opacity-50;
+    padding: 0.8rem 1.4rem;
+  }
+  /* Gold — the one premium CTA treatment, used for the primary action */
+  .btn-primary {
+    @apply btn bg-gradient-to-b from-gold-soft to-signal text-on-signal shadow-sm hover:-translate-y-0.5 hover:shadow-lifted;
+  }
+  .btn-signal {
+    @apply btn-primary;
+  }
+  .btn-outline {
+    @apply btn border border-line text-ink bg-transparent hover:border-signal hover:text-signal;
+  }
+  .btn-ghost {
+    @apply btn text-ink hover:bg-surface hover:text-signal;
+  }
+  .btn-on-dark {
+    @apply btn border border-ink/25 text-ink hover:border-signal hover:text-signal;
+  }
+
+  /* ---- Cards ---- */
+  .card {
+    @apply rounded-md border border-line bg-surface p-7 transition-all duration-300 ease-out;
+  }
+  .card-interactive {
+    @apply card hover:border-signal/40 hover:shadow-lifted;
+  }
+
+  /* ---- Form fields ---- */
+  .field-label {
+    @apply mb-2 block text-sm font-medium text-ink;
+  }
+  .field-input {
+    @apply block w-full rounded border border-line bg-surface px-4 py-3 text-base text-ink
+           placeholder:text-slate-500
+           focus:border-primary focus:ring-1 focus:ring-primary;
+  }
+  .field-error {
+    @apply mt-1.5 text-sm text-red-400;
+  }
+
+  /* ---- Layout helpers ---- */
+  .section {
+    @apply py-section-sm md:py-section;
+  }
+  .section-surface {
+    @apply bg-surface;
+  }
+  /* The most emphasized dark panel on the page (footer, closing CTAs) —
+     a shade lighter than the page background with a hairline gold top
+     border, rather than a literal color inversion. */
+  .section-dark {
+    @apply bg-surface text-ink border-t border-signal/20;
+  }
+
+  .eyebrow {
+    @apply font-mono text-xs uppercase tracking-[0.1em] text-slate-600;
+  }
+
+  .link-underline {
+    @apply underline decoration-1 underline-offset-4 decoration-ink/30 transition-colors hover:decoration-signal hover:text-signal;
+  }
+
+  /* Skip link for keyboard users */
+  .skip-link {
+    @apply absolute left-4 top-[-100px] z-[100] rounded bg-signal px-4 py-2 text-on-signal transition-all focus:top-4;
+  }
+}
